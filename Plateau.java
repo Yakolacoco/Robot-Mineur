@@ -19,34 +19,40 @@ public class Plateau {
     private void initialiserPlateau() {
         Random rand = new Random();
 
-        // Remplir de cases vides
         for (int y = 0; y < hauteur; y++) {
             for (int x = 0; x < largeur; x++) {
                 cases[y][x] = new CaseVide();
             }
         }
 
-        // Placer l'entrepôt
-        int ex = rand.nextInt(largeur);
-        int ey = rand.nextInt(hauteur);
+        int ex, ey;
+        do {
+            ex = rand.nextInt(largeur);
+            ey = rand.nextInt(hauteur);
+        } while (ex == robot.getX() && ey == robot.getY());
+
         entrepot = new Entrepot();
         cases[ey][ex] = entrepot;
 
-        // Placer quelques mines
         for (int i = 0; i < 5; i++) {
             int x = rand.nextInt(largeur);
             int y = rand.nextInt(hauteur);
-            if (cases[y][x] instanceof CaseVide) {
+
+            if (cases[y][x] instanceof CaseVide && (x != robot.getX() || y != robot.getY())) {
                 cases[y][x] = new Mine(5);
+            } else {
+                i--;
             }
         }
 
-        // Placer quelques barrières
         for (int i = 0; i < 5; i++) {
             int x = rand.nextInt(largeur);
             int y = rand.nextInt(hauteur);
-            if (cases[y][x] instanceof CaseVide) {
+
+            if (cases[y][x] instanceof CaseVide && (x != robot.getX() || y != robot.getY())) {
                 cases[y][x] = new Barriere();
+            } else {
+                i--;
             }
         }
     }
