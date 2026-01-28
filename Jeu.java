@@ -1,90 +1,90 @@
-import java.util.Scanner;
+import java.util.Random;
 
-public class Jeu {
+public class Plateau {
 
-    private Plateau plateau;
+    private int largeur;
+    private int hauteur;
+    private Case[][] cases;
     private Robot robot;
-    private boolean enCours;
-    private Scanner scanner;
+    private Entrepot entrepot;
 
-    public Jeu(Plateau plateau, Robot robot) {
-        this.plateau = plateau;
+    public Plateau(int largeur, int hauteur, Robot robot) {
+        this.largeur = largeur;
+        this.hauteur = hauteur;
         this.robot = robot;
-        this.enCours = true;
-        this.scanner = new Scanner(System.in);
+        this.cases = new Case[hauteur][largeur];
+        initialiserPlateau();
     }
 
-    // affiche le début de la partie
-    public void demarrer() {
-        System.out.println("=== Début de la simulation ===");
+    private void initialiserPlateau() {
+        Random rand = new Random();
 
-        while (enCours) {
-            plateau.afficherPlateau();
-            robot.afficherEtat();
-        // montre les commande pour se déplacer
-            System.out.print("Commande (haut/bas/gauche/droite/repos/etat/quitter) : ");
-            String commande = scanner.nextLine().toLowerCase();
-
-            traiterCommande(commande);
-            verifierFin();
-        }
-    // affiche la fin de la partie
-        System.out.println("=== Fin de la partie ===");
-    }
-
-    private void traiterCommande(String commande) {
-        int nx = robot.getX(); // cordonner de la largeur
-        int ny = robot.getY(); // cordonner de la hauteur
-
-        switch (commande) {
-            case "haut":
-                ny--; // on monte de une case
-                break;
-            case "bas":
-                ny++; // on dessend d'une casse
-                break;
-            case "gauche":
-                nx--; // on de déplace a gauche
-                break;
-            case "droite":
-                nx++; // on de déplace a droite
-                break;
-            case "repos":
-                robot.reposer(); // le rebot se repos
-                return;
-            case "etat":
-                robot.afficherEtat(); // voir son état énergie
-                return;
-            case "quitter":
-                enCours = false; // pour areter le jeu
-                return;
-            default:
-                System.out.println("Commande inconnue.");
-                return;
-        }
-
-        //il va donner les information des commande pour qui interagie au robot
-        if (plateau.estFranchissable(nx, ny)) {
-            robot.deplacer(nx, ny);
-            Case c = plateau.obtenirCase(nx, ny);
-            if (c != null) {
-                c.interagir(robot);
+        for (int y = 0; y < hauteur; y++) {
+            for (int x = 0; x < largeur; x++) {
+                cases[y][x] = new CaseVide();
             }
-        } else {
-            System.out.println("Déplacement impossible !");
-        }
-    }
-    // affiche le robot qui a plus de énergie
-    private void verifierFin() {
-        if (robot.getEnergie() <= 0) {
-            System.out.println("Le robot n'a plus d'énergie !");
-            enCours = false;
         }
 
-    // affiche la réusite de objetif
-        if (plateau.getEntrepot().getMineraisTotal() >= 10) {
-            System.out.println("Victoire ! Objectif atteint !");
-            enCours = false;
+        int ex, ey;
+        do {
+            ex = rand.nextInt(largeur);
+            ey = rand.nextInt(hauteur);
+        } while (ex == robot.getX() && ey == robot.getY());
+
+        entrepot = new Entrepot();
+        cases[ey][ex] = entrepot;
+
+        for (int i = 0; i < 5; i++) {
+            int x = rand.nextInt(largeur);
+            int y = rand.nextInt(hauteur);
+
+            if (cases[y][x] instanceof CaseVide && (x != robot.getX() || y != robot.getY())) {
+                cases[y][x] = new Mine(5);
+            } else {
+                i--;
+            }
+        }
+
+        for (int i = 0; i < 5; i++) {
+            int x = rand.nextInt(largeur);
+            int y = rand.nextInt(hauteur);
+
+            if (cases[y][x] instanceof CaseVide && (x != robot.getX() || y != robot.getY())) {
+                cases[y][x] = new Barriere();
+            } else {
+                i--;
+            }
+        }
+    }
+
+    public boolean estValide(int x, int y) {
+        return x >= 0 && x < largeur && y >= 0 && y < hauteur;
+    }
+
+    public boolean estFranchissable(int x, int y) {
+        if (!estValide(x, y)) return false;
+        return cases[y][x].estFranchissable();
+    }
+
+    public Case obtenirCase(int x, int y) {
+        if (!estValide(x, y)) return null;
+        return cases[y][x];
+    }
+
+    public Entrepot getEntrepot() {
+        return entrepot;
+    }
+
+    public void afficherPlateau() {
+        for (int y = 0; y < hauteur; y++) {
+            for (int x = 0; x < largeur; x++) {
+                if (robot.getX() == x && robot.getY() == y) {
+                    System.out.print("R ");
+                } else {
+                    System.out.print(cases[y][x].afficher() + " ");
+                }
+            }
+            System.out.println();
         }
     }
 }
